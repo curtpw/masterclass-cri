@@ -1,0 +1,42 @@
+{
+  "name": "cri-sensors-neural",
+  "version": "1.0.0",
+  "title": "CMI Gesture Manager with Neural Net Support",
+  "description": "Simple app for managing gesture detection device.",
+  "tags": [
+    {
+      "label": "lorem",
+      "type": "ipsum"
+    },
+    {
+      "label": "nRF52832",
+      "type": "platform"
+    },
+    {
+      "label": "ble",
+      "type": "comm"
+    }
+  ],
+  "libraries": [
+    {
+      "name": "jquery",
+      "version": "2.1.1"
+    }
+  ],
+  "plugins": [
+    {
+      "name": "cordova-plugin-ble",
+      "version": "2.0.0"
+    }
+  ],
+  "index-file": "index.html",
+  "uuid": "4523e563-c67d-4f7c-a6fd-53ae8b84379f",
+  "uuid_BACK": "db9579b8-5665-4dab-b3e5-66d63be47c63",
+  "icon": "app-icon.png",
+  "doc-url": "http://evothings.com/2.2/doc/examples/mbed-custom-gatt.html",
+  "long-description": "Simple app for setting gesture targets, managing data on gesture detection and feedback wearable device.",
+  "cordova-id": "cmi.wearable.gesture.neuralnet",
+  "author-name": "Curt White",
+  "author-email": "curtpw@gmail.com",
+  "author-url": "https://childmind.org"
+}

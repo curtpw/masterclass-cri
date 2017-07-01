@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<!--
+Description:
+
+	Streaming Sensor Data Neural Network
+
+-->
+<html>
+
+<head>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, user-scalable=no,
+		shrink-to-fit=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+
+	<title>Streaming Sensor Data Neural Network</title>
+
+	<style>
+		@import 'ui/css/evothings-app.css';
+	</style>
+
+	<style>
+		#connectButton {
+			width: 49%;
+			float: right;
+		}
+
+		#getTrueButton, #getFalseButton, #trainButton {
+			width: 100%;
+			display: block;
+		}
+
+		#clearTrueButton, #clearFalseButton {
+			width: 49%;
+			float: right; 
+		}
+
+		#saveButton {
+			width: 49%;
+			float: left; 
+		}
+
+		#loadButton {
+			width: 49%;
+			float: right; 
+		}
+
+		#deviceName {
+			width: 49%;
+		/*	display: inline-block; */
+		/*	display: block; */
+			float: left;
+			-webkit-box-sizing: border-box;
+			box-sizing: border-box;
+			margin: 0.5em 0 0.5em 0;
+		/*	padding: 9px 13px 8px 13px; */
+		}
+		#numTrueData, #numFalseData{
+			width: 49%;
+			float: left; 
+			color: black;
+			background-color: white;
+			font-size: 20px;
+			margin: 0.5em 0 0.5em 0;
+		}
+
+		.hardGreen{
+			background-color: #54dfb3 !important;
+		}
+		.hardIndigo{
+			background-color: #b48b9b !important;
+		}
+		#dataValues div{
+			font-size: 16px;
+			width: 70px;
+			display:inline-block;
+		}
+
+		button{
+			padding-top: 8px;
+			padding-bottom: 8px;
+		}
+		button span{
+			font-size: 12px
+			font-style: normal;
+			text-transform: lowercase;
+			font-family: arial, helvetica;
+		}
+
+		header{
+			background-color: #0067a1;
+		}
+	</style>
+
+	<script>
+	// Redirect console.log to Evothings Workbench.
+	if (window.hyper && window.hyper.log) { console.log = hyper.log }
+	</script>
+
+	<script src="cordova.js"></script>
+	<script src="libs/jquery/jquery.js"></script>
+	<script src="libs/evothings/evothings.js"></script>
+	<script src="libs/evothings/ui/ui.js"></script>
+	<script src="libs/evothings/easyble/easyble.js"></script>
+	<script src="libs/synaptic/synaptic.js"></script>
+	<script src="app.js"></script>
+
+
+</head>
+
+<body ontouchstart=""><!-- ontouchstart="" enables low-delay CSS transitions. -->
+	<header>
+		<button class="back" onclick="history.back()">
+		</button>
+		<img class="logotype" src="ui/images/logo.svg" alt="Child Mind Institute" />
+	</header>
+
+<!-- connection -->
+	<input id="deviceName" value="ChildMind" type="text" />
+
+	<button id="connectButton" class="blue" onclick="app.onConnectButton()">
+		Connect
+	</button>
+<!-- true data -->
+	<button id="getTrueButton" class="green" onclick="app.onGetTrueButton()"> 
+		Gather True Data
+	</button>
+
+	<div id="numTrueData">
+		0 True
+	</div>
+
+	<button id="clearTrueButton" class="red" onclick="app.onClearTrueButton()">
+		Clear True
+	</button>
+<!-- false data -->
+	<button id="getFalseButton" class="green" onclick="app.onGetFalseButton()">
+		Gather False Data
+	</button>
+
+	<div id="numFalseData">
+		0 False
+	</div>
+
+	<button id="clearFalseButton" class="red" onclick="app.onClearFalseButton()">
+		Clear False
+	</button>
+<!-- crunch stuff -->
+	<button id="trainButton" class="green" onclick="app.onTrainButton()"> 
+		Train Neural Net
+	</button>
+
+	<button id="saveButton" class="green" onclick="app.onVarButton(1)">
+		Save
+	</button>
+	<button id="loadButton" class="green" onclick="app.onVarButton(2)">
+		Load
+	</button>
+	</div>
+
+	<p id="info">Not Connected</p>
+	<p id="score">Neural net standing by....</p>
+
+	<h2>Data</h2>
+	<canvas id="canvas" width="300" height="150"></canvas>
+	<div id="dataValues">
+		<div class="senseVal rollVal" style="color:#202020;"></div>
+		<div class="senseVal pitchVal" style="color:#808080;"></div>
+		<div class="senseVal xVal" style="color:#855723;"></div>
+		<div class="senseVal yVal" style="color:#b99c6b;"></div>
+		<div class="senseVal zVal" style="color:#8f3b1b;"></div>
+	</div>
+
+
+</body>
+
+</html>
+
+

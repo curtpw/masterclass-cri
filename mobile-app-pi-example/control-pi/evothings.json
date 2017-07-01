@@ -1,0 +1,39 @@
+{
+  "name": "control-pi",
+  "version": "1.0.0",
+  "title": "Control Raspberry Pi",
+  "description": "App to control your Raspberry Pi using BLE.",
+  "tags": [
+    {
+      "label": "nodejs",
+      "type": "platform"
+    },
+    {
+      "label": "raspberrypi",
+      "type": "vendor"
+    },
+    {
+      "label": "ble",
+      "type": "comm"
+    }
+  ],
+  "libraries": [
+    {
+      "name": "jquery",
+      "version": "2.1.1"
+    }
+  ],
+  "plugins": [
+    {
+      "name": "cordova-plugin-ble",
+      "version": "2.0.0"
+    }
+  ],
+  "index-file": "index.html",
+  "app-dir": "app",
+  "uuid": "5c1688b8-3b5a-46f2-ae59-adc48819b523",
+  "icon": "app-icon.png",
+  "doc-url": "http://evothings.com/2.2/doc/examples/rpi3-system-information.html",
+  "long-description": "App to control your Raspberry Pi using BLE.",
+  "cordova-id": "com.childmind.examples.controlpi"
+}
