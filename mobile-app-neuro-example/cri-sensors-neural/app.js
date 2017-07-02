@@ -14,6 +14,16 @@ var app = {};
 app.deviceName = 'ChildMind'
 
 /**
+ * Neural net score global var
+ */
+app.neuroScore = 0;
+
+/**
+ * Neural net score global var
+ */
+app.wearableState = 0;
+
+/**
  * Nueral net control flags
  */
 app.getTrueFlag = false;
@@ -38,9 +48,6 @@ app.deviceUUID = {};
 // UUIDs for movement services and characteristics.
 app.deviceUUID.PRIMARY_SERVICE = '0000a000-0000-1000-8000-00805f9b34fb';
 app.deviceUUID.MOVEMENT_DATA = '0000a003-0000-1000-8000-00805f9b34fb';
-//app.wearabledevice.MOVEMENT_CONFIG = 'f000aa82-0451-4000-b000-000000000000';
-//app.wearabledevice.MOVEMENT_PERIOD = 'f000aa83-0451-4000-b000-000000000000';
-//app.wearabledevice.MOVEMENT_NOTIFICATION = '00002902-0000-1000-8000-00805f9b34fb';
 
 /**
  * Data that is plotted on the canvas.
@@ -59,19 +66,6 @@ app.trainingDataTrue = [];
 app.trainingDataFalse = [];
 
 /**
- * Arrays that hold sensor values for gesture targets
- */
- /*
-var rollTargets=[0,0,0,0,0,0,0,0,0];
-var pitchTargets=[0,0,0,0,0,0,0,0,0];
-var proximityTargets=[0,0,0,0,0,0,0,0,0];
-var thermo1Targets=[0,0,0,0,0,0,0,0,0];
-var thermo2Targets=[0,0,0,0,0,0,0,0,0];
-var thermo3Targets=[0,0,0,0,0,0,0,0,0];
-var thermo4Targets=[0,0,0,0,0,0,0,0,0];
-*/
-
-/**
  * Attach synaptic neural net components to app object
  */
 app.Neuron = synaptic.Neuron;
@@ -80,7 +74,7 @@ app.Network = synaptic.Network;
 app.Trainer = synaptic.Trainer;
 app.Architect = synaptic.Architect;
 
-app.neuralNet = new app.Architect.Perceptron(8,7,6,1);
+app.neuralNet = new app.Architect.Perceptron(3,2,2,1);
 app.trainer = new app.Trainer(app.neuralNet);
 
 /**
@@ -92,27 +86,6 @@ app.initialize = function()
 		'deviceready',
 		function() { evothings.scriptsLoaded(app.onDeviceReady) },
 		false);
-
-	initializeAWS(); //get reasy to stream data to AWS with Lambda and DynamoDB
-
-	//Initial neural net bias training
-/*	app.trainer.train([
-			{
-				input: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-				output: [0]
-			},
-			{
-				input: [0.6, 0.6, 0.1, 0.85, 0.85, 0.85, 0.85],
-				output: [1]
-			},
-		],{
-			rate: .5,
-			iterations: 50,
-			error: .1,
-			shuffle: true,
-			log: 1000,
-			cost: app.Trainer.cost.CROSS_ENTROPY
-	}); */
 
 	// Called when HTML page has been loaded.
 	$(document).ready( function()
@@ -132,37 +105,6 @@ app.startSensorDataStream = function(device)
 {
 	app.showInfo('Status: Starting data stream...');
 
-	//Create MLP (Multi Layer Perceptron) synaptic neural net object
-/*	var Neuron = synaptic.Neuron,
-	Layer = synaptic.Layer,
-	Network = synaptic.Network,
-	Trainer = synaptic.Trainer,
-	Architect = synaptic.Architect;
-
-	var neuralNet = new Architect.Perceptron(7,9,9,1);
-	var trainer = new Trainer(neuralNet); */
-
-	//dummer train to get things rolling
-/*	trainer.train([
-			{
-				input: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-				output: [0]
-			},
-			{
-				input: [0.6, 0.6, 0.1, 0.85, 0.85, 0.85, 0.85],
-				output: [1]
-			},
-		],{
-			rate: .5,
-			iterations: 50,
-			error: .1,
-			shuffle: true,
-			log: 1000,
-			cost: Trainer.cost.CROSS_ENTROPY
-	});*/
-
-	//To apply neural net: value = neuralNet.activate([a,b,c,d,e,f,g,h]);
-
 	// Start accelerometer notification.
 	device.enableNotification(
 		app.deviceUUID.MOVEMENT_DATA,
@@ -176,38 +118,35 @@ app.startSensorDataStream = function(device)
 			var values = app.getAccelerometerValues(dataArray);  //return [roll, pitch, proximity, thermo1, thermo2, thermo3, thermo4, accelX, accelY, accelZ];
 
 			/*************************** APPLY MLP NEURAL NET ***********************************/
-			var neuroScore = app.neuralNet.activate([ 
-				(values[7]/200),
-				(values[8]/200),
-				(values[9]/200),
-				(values[2]/255),
-				(values[3]/102),
-				(values[4]/102),
-				(values[5]/102),
-				(values[6]/102)]);
+			app.neuroScore = app.neuralNet.activate([ 
+				values[2],
+				values[3],
+				values[4]]);
 
-			if(neuroScore > 0.95) app.alertDetect();
+			/*************************** NOTIFY WEARABLE ****************************************/
+			if(app.neuroScore > 0.90 && app.wearableState == 0 ) app.alertDetect(); //notify wearable change state to true) app.alertDetect();
+			if(app.neuroScore < 0.70 && app.wearableState == 1 ) app.alertDetect(); //notify wearable change state to false) app.alertDetect();
 
 			/**************************** TRAIN TRUE FOR ON TARGET ******************************/
 			if(app.getTrueFlag){
 				app.trainingDataTrue.push({
-							input: [(values[7]/200), (values[8]/200), (values[9]/200), (values[2]/255), (values[3]/102), (values[4]/102), (values[5]/102), (values[6]/102)],
+							input: [values[2], values[3], values[4] ],
 							output: [1]
 						});
-				document.getElementById('score').innerHTML = "Neural Net Score: " + neuroScore + " ..gathering True";
+				document.getElementById('score').innerHTML = "Neural Net Score: ....gathering true data";
 				document.getElementById('numTrueData').innerHTML = app.trainingDataTrue.length + " True";
 			}
 
 			/**************************** TRAIN FALSE FOR OFF TARGET ******************************/
 			else if(app.getFalseFlag){
 				app.trainingDataFalse.push({
-							input: [(values[7]/200), (values[8]/200), (values[9]/200), (values[2]/255), (values[3]/102), (values[4]/102), (values[5]/102), (values[6]/102)],
+							input: [values[2], values[3], values[4] ],
 							output: [0]
 						});
-				document.getElementById('score').innerHTML = "Neural Net Score: " + neuroScore + " ..gathering False";
+				document.getElementById('score').innerHTML = "Neural Net Score: ....gathering false data";
 				document.getElementById('numFalseData').innerHTML = app.trainingDataFalse.length + " False";
 			}
-			else{document.getElementById('score').innerHTML = "Neural Net Score: " + neuroScore;}
+			else if(app.trainingDataTrue.length > 3){document.getElementById('score').innerHTML = "Neural Net Score: " + app.neuroScore;}
 
 			/********************************* TRAIN NEURAL NET ***********************************/
 			if(app.trainFlag){
@@ -216,7 +155,7 @@ app.startSensorDataStream = function(device)
 				console.log("**Training...");
 
 				//Recreate neural net and trainer
-				app.neuralNet = new app.Architect.Perceptron(8,7,6,1);
+				app.neuralNet = new app.Architect.Perceptron(3,2,2,1);
 				app.trainer = new app.Trainer(app.neuralNet);
 
 				var trainingData = app.trainingDataTrue.concat(app.trainingDataFalse);
@@ -255,7 +194,14 @@ app.alertDetect = function()
 
 			var detect = new Uint8Array(1);
 
-				detect[0] = 1;
+				if(app.wearableState == 0 && app.neuroScore > 0.90){  //send activate
+					detect[0] = 5;
+				} 
+
+				if(app.wearableState == 1 && app.neuroScore < 0.70){   //send  deactivate
+					detect[0] = 15;
+				} 
+
 
 				app.device.writeCharacteristic(
 					'0000a002-0000-1000-8000-00805f9b34fb',
@@ -352,6 +298,9 @@ app.connectToDevice = function(device)
 			app.showInfo('Status: Connected');
 			app.readServices(app.device);
 
+			//if wearable alert is set to true from past session reset to false
+			app.alertDetect;
+
 			//Start data streaming and graphing after device connection
 			app.startSensorDataStream();
 		},
@@ -406,8 +355,6 @@ app.onConnectButton = function()
 	// Start scanning.
 	app.startScan();
 	app.showInfo('Status: Scanning...');
-
-	$("#numTargets").text("0 Targets");
 
 };
 
@@ -464,87 +411,6 @@ app.onClearFalseButton = function()
 	document.getElementById('numFalseData').innerHTML = "0 False";
 };
 
-/**
- * Gather neural net training data for true condition - when on target
- */
-/*app.onClearButton = function()
-{
-	app.device.readCharacteristic(
-		'0000a001-0000-1000-8000-00805f9b34fb',
-		function(data)
-		{
-			var view = new Uint8Array(data);
-			var target = new Uint8Array(1);
-			app.totalTargets = 0;
-			target[0] = app.totalTargets;
-			$("#numTargets").text("0 Targets");
-
-			app.device.writeCharacteristic(
-				'0000a002-0000-1000-8000-00805f9b34fb',
-				target,
-				function() { console.log('Targets cleared successfully!') },
-				function(error) { console.log('Target clear failed: ' + error) });
-
-		},
-		function(error)
-		{
-			console.log('Error: Read characteristic failed: ' + error);
-		}
-	);
-
-	console.log("clear targets");
-	for(var d=0;d<rollTargets.length;d++){
-		rollTargets[d]=0;
-		pitchTargets[d]=0;
-		proximityTargets[d]=0;
-		thermo1Targets[d]=0;
-		thermo2Targets[d]=0;
-		thermo3Targets[d]=0;
-		thermo4Targets[d]=0;
-	}
-}; */
-
-/*app.onVarButton = function(buttonNum)
-{
-	app.device.readCharacteristic(
-		'0000a001-0000-1000-8000-00805f9b34fb',
-		function(data)
-		{
-			// app.varState stores data user input data marker state  0 = false/false , 1 = true/false , 2 = false/true , 3 = true/true 
-			if(buttonNum == 1 && app.varState == 0) app.varState = 1;
-			else if(buttonNum == 1 && app.varState == 1) app.varState = 0;
-			else if(buttonNum == 1 && app.varState == 2) app.varState = 3;
-			else if(buttonNum == 1 && app.varState == 3) app.varState = 2;
-			else if(buttonNum == 2 && app.varState == 0) app.varState = 2;
-			else if(buttonNum == 2 && app.varState == 1) app.varState = 3;
-			else if(buttonNum == 2 && app.varState == 2) app.varState = 0;
-			else if(buttonNum == 2 && app.varState == 3) app.varState = 2;
-
-
-			var view = new Uint8Array(data);
-			var sendVar = new Uint8Array(1);
-
-			//add 90 to differentiate from target values which use same BLE characteristic for comms
-			sendVar[0] = app.varState + 90;
-
-
-		//	$("#numTargets").text("0 Targets");
-
-			if(buttonNum == 1) { $("#alphaButton").toggleClass("green"); $("#alphaButton").toggleClass("hardIndigo"); }
-			if(buttonNum == 2) { $("#betaButton").toggleClass("green"); $("#betaButton").toggleClass("hardIndigo"); }
-
-			app.device.writeCharacteristic(
-				'0000a002-0000-1000-8000-00805f9b34fb',
-				sendVar,
-				function() { console.log('Var update sent successfully!') },
-				function(error) { console.log('Var update failed: ' + error) });
-
-		},
-		function(error)
-		{
-			console.log('Error: Read characteristic failed: ' + error);
-		});
-};*/
 
 /**
  * Debug logging of found services, characteristics and descriptors.
@@ -581,14 +447,6 @@ app.logAllServices = function(device)
 	}
 };
 
-/**
- * Data streaming and graphing on/off.
- */
-/*app.onGraphButton = function()
-{
-	$("#graphButton").toggleClass("green"); $("#graphButton").toggleClass("indigo");
-	app.startSensorDataStream();
-}*/
 
 app.readServices = function(device)
 {
@@ -620,6 +478,8 @@ app.getAccelerometerValues = function(data)
 	var accelX	 	= evothings.util.littleEndianToUint8(data, 2);
 	var accelY	 	= evothings.util.littleEndianToUint8(data, 3);
 	var accelZ	 	= evothings.util.littleEndianToUint8(data, 4);
+
+	app.wearableState = evothings.util.littleEndianToUint8(data, 5); //device state of wearable
 
 	// Return result.
 	return [roll, pitch, accelX, accelY, accelZ];
@@ -664,20 +524,17 @@ app.drawDiagram = function(values)
 		else if(axis == 1){  //angular
 			diagramY = (value) / 6 + 20/*(canvas.height / 7)*/;
 		}
-		else if(axis == 2){   //proximity
+		else if(axis == 2){   //Accelerometer X axis
 			diagramY = (255 - value) / 7 + (canvas.height - 35);
 		}
-		else if(axis == 3){ //thermopiles
+		else if(axis == 3){ //Accelerometer Y axis
 			diagramY = (102 - value) * 2 + (canvas.height / 5) + 0;
 		}
-		else if(axis == 4){ //thermopiles
+		else if(axis == 4){ //Accelerometer Z axis
 			diagramY = (102 - value) * 2 + (canvas.height / 5) + 15;
 		}
-		else if(axis == 5){ //thermopiles
+		else if(axis == 5){ 
 			diagramY = (102 - value) * 2 + (canvas.height / 5) + 30;
-		}
-		else if(axis == 6){ //thermopiles
-			diagramY = (102 - value) * 2 + (canvas.height / 5) + 45;
 		}
 		//var diagramY = value / 2;
 
@@ -717,7 +574,6 @@ app.drawDiagram = function(values)
 					else if(axis == 3) targetY = calcDiagramY(thermo1Targets[t], axis); 	
 					else if(axis == 4) targetY = calcDiagramY(thermo2Targets[t], axis); 	
 					else if(axis == 5) targetY = calcDiagramY(thermo3Targets[t], axis); 	
-					else if(axis == 6) targetY = calcDiagramY(thermo4Targets[t], axis); 	
 					context.moveTo(0, targetY);
 					context.lineTo(canvas.width, targetY);
 				//	console.log("Sensor index: " + axis + " Target Y val: " + targetY);

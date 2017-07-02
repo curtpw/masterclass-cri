@@ -1,0 +1,30 @@
+{
+  "name": "cri-sensors-neural",
+  "version": "1.0.0",
+  "title": "cri-sensors-neural",
+  "description": "Demo for CRI masterclass",
+  "long-description": "Demo for CRI masterclass based on synaptic.js and Evothings examples",
+  "tags": [],
+  "libraries": [
+    {
+      "name": "jquery",
+      "version": "2.1.1"
+    }
+  ],
+  "index-file": "index.html",
+  "uuid": "cb2ad6c9-7fdf-4d79-b1eb-28669a5cb9e0",
+  "icon": "app-icon.png",
+  "cordova-id": "cmi.wearable.gesture.neuralnet",
+  "plugins": [
+    {
+      "name": "cordova-plugin-device-motion"
+    },
+    {
+      "name": "cordova-plugin-vibration"
+    }
+  ],
+  "doc-url": "https://evothings.com/2.2/doc/examples/cordova-accelerometer.html",
+  "author-name": "Curt White",
+  "author-email": "curt.white@childmind.org",
+  "author-url": "https://childmind.org.com"
+}

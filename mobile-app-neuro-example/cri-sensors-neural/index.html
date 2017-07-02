@@ -88,7 +88,21 @@ Description:
 		}
 
 		header{
-			background-color: #0067a1;
+			background-color: #E0E0E0;		
+			padding-top: 2.5%;
+		}
+		header p{
+			font-size: 35%;
+			line-height: 110%;
+			padding: 0px;
+			margin: 0px;
+		}
+		header img.logotype{
+			position: absolute;
+			left: -50%;
+			top: -17%;
+			height: 130%;
+			width: 130%;
 		}
 	</style>
 
@@ -110,9 +124,9 @@ Description:
 
 <body ontouchstart=""><!-- ontouchstart="" enables low-delay CSS transitions. -->
 	<header>
-		<button class="back" onclick="history.back()">
-		</button>
+
 		<img class="logotype" src="ui/images/logo.svg" alt="Child Mind Institute" />
+		<p>Centre de recherches</p> <p>interdisciplinaires</p>
 	</header>
 
 <!-- connection -->
@@ -148,13 +162,6 @@ Description:
 <!-- crunch stuff -->
 	<button id="trainButton" class="green" onclick="app.onTrainButton()"> 
 		Train Neural Net
-	</button>
-
-	<button id="saveButton" class="green" onclick="app.onVarButton(1)">
-		Save
-	</button>
-	<button id="loadButton" class="green" onclick="app.onVarButton(2)">
-		Load
 	</button>
 	</div>
 

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<!--
+Demonstration of the Cordova Accelerometer API.
+-->
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="format-detection" content="telephone=no" />
+	<meta name="viewport" content="width=device-width, user-scalable=no,
+		shrink-to-fit=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+
+	<title>Accelerometer Neural Network</title>
+
+	<style>
+	@import 'ui/css/evothings-app.css';
+
+	#sprite
+	{
+		position: absolute;
+		width: 300px;
+		height: auto;
+		top: 0px;
+		left: 0px;
+		z-index: 1000;
+		display: none;
+	}
+	</style>
+
+	<style>
+		#connectButton {
+			width: 49%;
+			float: right;
+		}
+
+		#getTrueButton, #getFalseButton, #trainButton {
+			width: 100%;
+			display: block;
+		}
+
+		#clearTrueButton, #clearFalseButton {
+			width: 49%;
+			float: right; 
+		}
+
+		#saveButton {
+			width: 49%;
+			float: left; 
+		}
+
+		#loadButton {
+			width: 49%;
+			float: right; 
+		}
+
+		#deviceName {
+			width: 49%;
+		/*	display: inline-block; */
+		/*	display: block; */
+			float: left;
+			-webkit-box-sizing: border-box;
+			box-sizing: border-box;
+			margin: 0.5em 0 0.5em 0;
+		/*	padding: 9px 13px 8px 13px; */
+		}
+		#numTrueData, #numFalseData{
+			width: 49%;
+			float: left; 
+			color: black;
+			background-color: white;
+			font-size: 20px;
+			margin: 0.5em 0 0.5em 0;
+		}
+
+		.hardGreen{
+			background-color: #54dfb3 !important;
+		}
+		.hardIndigo{
+			background-color: #b48b9b !important;
+		}
+		#dataValues div{
+			font-size: 16px;
+			width: 70px;
+			display:inline-block;
+		}
+
+		button{
+			padding-top: 8px;
+			padding-bottom: 8px;
+		}
+		button span{
+			font-size: 12px
+			font-style: normal;
+			text-transform: lowercase;
+			font-family: arial, helvetica;
+		}
+
+		header{
+			background-color: #E0E0E0;		
+			padding-top: 2.5%;
+		}
+		header p{
+			font-size: 35%;
+			line-height: 110%;
+			padding: 0px;
+			margin: 0px;
+		}
+		header img.logotype{
+			position: absolute;
+			left: -50%;
+			top: -17%;
+			height: 130%;
+			width: 130%;
+		}
+	</style>
+
+	<script>
+	// Redirect console.log to Evothings Workbench.
+	if (window.hyper && window.hyper.log) { console.log = hyper.log }
+	</script>
+
+</head>
+
+<body>
+
+	<header>
+		<img class="logotype" src="ui/images/logo.svg" alt="CRI" />
+		<p>Centre de recherches</p> <p>interdisciplinaires</p>
+	</header>
+
+	<h1>Accelerometer Neural Network</h1>
+
+	<button class="blue" onclick="showVibrationDialog()">
+		Vibration Setting
+	</button>
+
+	<!-- true data -->
+	<button id="getTrueButton" class="green" onclick="onGetTrueButton()"> 
+		Gather True Data
+	</button>
+
+	<div id="numTrueData">
+		0 True
+	</div>
+
+	<button id="clearTrueButton" class="red" onclick="onClearTrueButton()">
+		Clear True
+	</button>
+<!-- false data -->
+	<button id="getFalseButton" class="green" onclick="onGetFalseButton()">
+		Gather False Data
+	</button>
+
+	<div id="numFalseData">
+		0 False
+	</div>
+
+	<button id="clearFalseButton" class="red" onclick="onClearFalseButton()">
+		Clear False
+	</button>
+<!-- crunch stuff -->
+	<button id="trainButton" class="green" onclick="onTrainButton()"> 
+		Train Neural Net
+	</button>
+	</div>
+
+	<p id="info">Standing by...</p>
+	<p id="score">Neural net standing by....</p>
+
+	<h2>Data</h2>
+	<canvas id="canvas" width="300" height="150"></canvas>
+	<div id="dataValues">
+		<div class="senseVal xVal" style="color:#855723;"></div>
+		<div class="senseVal yVal" style="color:#b99c6b;"></div>
+	</div>
+
+	<script src="cordova.js"></script>
+	<script src="libs/evothings/evothings.js"></script>
+	<script src="libs/evothings/ui/ui.js"></script>
+	<script src="libs/jquery/jquery.js"></script>
+	<script src="libs/synaptic/synaptic.js"></script>
+
+	<script>
+	// Globals.
+	var shouldVibrate = true
+	var blockVibrate = false
+
+	/**
+	 * Object that holds application data and functions.
+	 */
+	var app = {};
+
+	/**
+	 * Neural net score global var
+	 */
+	app.neuroScore = 0;
+
+	/**
+	 * Neural net score global var
+	 */
+	app.deviceState = 0;
+
+	/**
+	 * Nueral net control flags
+	 */
+	app.getTrueFlag = false;
+	app.getFalseFlag = false;
+	app.trainFlag = false;
+
+	/**
+	 * Data that is plotted on the canvas.
+	 */
+	app.dataPoints = [];
+
+	/**
+	 * Set of Training data
+	 */
+	app.trainingDataTrue = [];
+	app.trainingDataFalse = [];
+
+	/**
+	 * Attach synaptic neural net components to app object
+	 */
+	app.Neuron = synaptic.Neuron;
+	app.Layer = synaptic.Layer;
+	app.Network = synaptic.Network;
+	app.Trainer = synaptic.Trainer;
+	app.Architect = synaptic.Architect;
+
+	app.neuralNet = new app.Architect.Perceptron(2,2,2,1);
+	app.trainer = new app.Trainer(app.neuralNet);
+
+	function initialise()
+	{
+		initialiseAccelerometer()
+	}
+
+	function initialiseAccelerometer()
+	{
+		function onSuccess(acceleration)
+		{
+			accelerometerHandler(acceleration.x, acceleration.y)
+		}
+
+		function onError(error)
+		{
+			console.log('Accelerometer error: ' + error)
+		}
+
+		navigator.accelerometer.watchAcceleration(
+			onSuccess,
+			onError,
+			{ frequency: 50 })
+	}
+
+	function initialiseSprite()
+	{
+		sprite = SpriteManager.makeSprite()
+		sprite.setDOMElement(document.getElementById('sprite'))
+		sprite.whenLoaded(function()
+		{
+			sprite.show()
+			sprite.setCenterX(SpriteManager.getPlayfieldWidth() / 2)
+			sprite.setCenterY(SpriteManager.getPlayfieldHeight() / 2)
+		})
+	}
+
+	function accelerometerHandler(accelerationX, accelerationY)
+	{
+		var dx = accelerationX * -10
+		var dy = accelerationY * -10
+
+		app.showInfo('Status: Starting data stream...');
+		app.showInfo('Status: Data stream active');
+
+		var values = [dx, dy];  
+
+		/*************************** APPLY MLP NEURAL NET ***********************************/
+		app.neuroScore = app.neuralNet.activate([ 
+			values[0],
+			values[1]
+		]);
+
+		/*************************** NOTIFY WEARABLE ****************************************/
+		if(app.neuroScore > 0.90 /* && shouldVibrate && !blockVibrate*/){
+			// Sprite is at an edge, vibrate the device.
+			navigator.notification.vibrate(500)
+
+			// Block vibration for a seconds.
+			blockVibrate = true
+			setTimeout(
+				function() { blockVibrate = false },
+				1000)
+		}
+
+		/**************************** TRAIN TRUE FOR ON TARGET ******************************/
+		if(app.getTrueFlag){
+				app.trainingDataTrue.push({
+						input: [values[0], values[1] ],
+						output: [1]
+				});
+				document.getElementById('score').innerHTML = "Neural Net Score: ....gathering true data";
+				document.getElementById('numTrueData').innerHTML = app.trainingDataTrue.length + " True";
+		}
+
+		/**************************** TRAIN FALSE FOR OFF TARGET ******************************/
+		else if(app.getFalseFlag){
+				app.trainingDataFalse.push({
+						input: [values[0], values[1] ],
+						output: [0]
+					});
+				document.getElementById('score').innerHTML = "Neural Net Score: ....gathering false data";
+				document.getElementById('numFalseData').innerHTML = app.trainingDataFalse.length + " False";
+		}
+		else if(app.trainingDataTrue.length > 3){document.getElementById('score').innerHTML = "Neural Net Score: " + app.neuroScore}
+
+		/********************************* TRAIN NEURAL NET ***********************************/
+		if(app.trainFlag){
+
+			app.showInfo('Status: Training...');
+			console.log("**Training...");
+
+			//Recreate neural net and trainer
+			app.neuralNet = new app.Architect.Perceptron(2,2,2,1);
+			app.trainer = new app.Trainer(app.neuralNet);
+
+			var trainingData = app.trainingDataTrue.concat(app.trainingDataFalse);
+
+			app.trainer.train(trainingData,{
+					rate: .05,
+					iterations: 5000,
+					error: .05,
+					shuffle: true,
+					log: 1000,
+					cost: app.Trainer.cost.CROSS_ENTROPY
+			});	
+			app.showInfo('Status: Training Completed');
+			console.log("**End Training...");
+
+			app.trainFlag = false;
+		}
+
+		//graph data in app UI
+		app.drawDiagram(values);
+	}
+
+	function showVibrationDialog()
+	{
+		navigator.notification.confirm(
+			'Use vibration when neural net score > 0.9?',
+    		function(buttonIndex) {
+    			shouldVibrate = (1 == buttonIndex) ? true : false
+    		},
+			'Vibration Setting',
+			['Yes','No']
+		)
+	}
+
+	/************************ IMPORTED ***********************/
+	/**
+	 * Adjust the canvas dimensions based on its container's dimensions.
+	 */
+	app.respondCanvas = function()
+	{
+		var canvas = $('#canvas')
+		var container = $(canvas).parent()
+		canvas.attr('width', $(container).width() ) // Max width
+		// Not used: canvas.attr('height', $(container).height() ) // Max height
+	};
+
+
+	/**
+	 * Print debug info to console and application UI.
+	 */
+	app.showInfo = function(info)
+	{
+		document.getElementById('info').innerHTML = info;
+		console.log(info);
+	};
+
+
+	/**
+	 * Gather neural net training data for true condition - when on target
+	 */
+	function onTrainButton()
+	{
+		console.log("app.onTrainButton");
+		app.trainFlag = true;
+	};
+
+	/**
+	 * Gather neural net training data for true condition - when on target
+	 */
+	function onGetTrueButton()
+	{
+		console.log("app.onGetTrueButton");
+		$("#getTrueButton").toggleClass("green"); 
+		$("#getTrueButton").toggleClass("hardIndigo"); 
+
+		app.getTrueFlag = !app.getTrueFlag;
+	};
+
+	/**
+	 * Gather neural net training data for false condition - when off target
+	 */
+	function onGetFalseButton()
+	{
+		console.log("app.onGetFalseButton");
+		$("#getFalseButton").toggleClass("green"); 
+		$("#getFalseButton").toggleClass("hardIndigo"); 
+
+		app.getFalseFlag = !app.getFalseFlag;
+	};
+
+	/**
+	 * Clear True Training set
+	 */
+	function onClearTrueButton()
+	{
+		console.log("app.onClearTrueButton");
+		app.trainingDataTrue = [];
+		document.getElementById('numTrueData').innerHTML = "0 True";
+	};
+
+	/**
+	 * Clear True Training set
+	 */
+	function onClearFalseButton()
+	{
+		console.log("app.onClearFalseButton");
+		app.trainingDataFalse = [];
+		document.getElementById('numFalseData').innerHTML = "0 False";
+	};
+
+	app.drawDiagram = function(values)
+	{
+		var canvas = document.getElementById('canvas');
+		var context = canvas.getContext('2d');
+
+		// Add recent values.
+		app.dataPoints.push(values);
+
+		// Remove data points that do not fit the canvas.
+		if (app.dataPoints.length > canvas.width)
+		{
+			app.dataPoints.splice(0, (app.dataPoints.length - canvas.width));
+		}
+
+		// Value is an accelerometer reading between -1 and 1.
+		function calcDiagramY(value, axis)
+		{
+		//	console.log("in drawLine calcDiagramY");
+			// Return Y coordinate for this value.
+			var diagramY;
+		//	var diagramY = (( (1 / value) * canvas.height) / 2) + (canvas.height / 2);
+			if(axis == 0){  //angular
+				diagramY = (value) / 2 + (canvas.height / 3);
+			}
+			else if(axis == 1){  //angular
+				diagramY = (value) / 2  + (canvas.height / 3)  + (canvas.height / 3);
+			}
+		//	else if(axis == 2){   //Accelerometer X axis
+		//		diagramY = (value) / 3 + 60;
+		//	}
+			//var diagramY = value / 2;
+
+			return diagramY;
+		}
+
+		function drawLine(axis, color)
+		{
+		//	console.log("in drawLine");
+			context.beginPath();
+			context.strokeStyle = color;
+			context.setLineDash([]); //no more dashed lines
+
+			var lastDiagramY = calcDiagramY(app.dataPoints[app.dataPoints.length-1][axis], axis);
+				context.moveTo(app.dataPoints.length - 2, lastDiagramY);
+
+			var x = 1;
+			for (var i = app.dataPoints.length - 2; i >= 0; i--)
+			{
+				var y = calcDiagramY(app.dataPoints[i][axis], axis);
+				context.lineTo(i, y); 
+				x++;
+			}
+
+			context.stroke();
+		
+		}
+
+		// Clear background.
+		context.clearRect(0, 0, canvas.width, canvas.height);
+
+		// Draw lines.
+		drawLine(0, 'green');
+		drawLine(1, 'blue');
+		drawLine(2, '#d57500');
+
+	}
+
+	function mergeObjects(obj, src) {
+	    Object.keys(src).forEach(function(key) { obj[key] = src[key]; });
+	    return obj;
+	}
+
+	document.addEventListener(
+		'deviceready',
+		function() { evothings.scriptsLoaded(initialise) },
+		false);
+
+	</script>
+
+</body>
+
+</html>

@@ -1,8 +1,8 @@
 {
-  "name": "cri-sensors-neural",
+  "name": "cri-sensors-neural222",
   "version": "1.0.0",
-  "title": "CMI Gesture Manager with Neural Net Support",
-  "description": "Simple app for managing gesture detection device.",
+  "title": "cri-sensors-neural222",
+  "description": "cri-sensors-neural",
   "tags": [
     {
       "label": "lorem",
@@ -34,7 +34,7 @@
   "uuid_BACK": "db9579b8-5665-4dab-b3e5-66d63be47c63",
   "icon": "app-icon.png",
   "doc-url": "http://evothings.com/2.2/doc/examples/mbed-custom-gatt.html",
-  "long-description": "Simple app for setting gesture targets, managing data on gesture detection and feedback wearable device.",
+  "long-description": "Demo for CRI masterclass.",
   "cordova-id": "cmi.wearable.gesture.neuralnet",
   "author-name": "Curt White",
   "author-email": "curtpw@gmail.com",
