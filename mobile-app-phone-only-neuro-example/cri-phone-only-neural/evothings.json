@@ -1,7 +1,7 @@
 {
-  "name": "cri-sensors-neural",
+  "name": "cri-phone-neural",
   "version": "1.0.0",
-  "title": "cri-sensors-neural",
+  "title": "cri-phone-neural",
   "description": "Demo for CRI masterclass",
   "long-description": "Demo for CRI masterclass based on synaptic.js and Evothings examples",
   "tags": [],
@@ -14,7 +14,7 @@
   "index-file": "index.html",
   "uuid": "cb2ad6c9-7fdf-4d79-b1eb-28669a5cb9e0",
   "icon": "app-icon.png",
-  "cordova-id": "cmi.wearable.gesture.neuralnet",
+  "cordova-id": "cmi.wearable.phone.crineuralnet",
   "plugins": [
     {
       "name": "cordova-plugin-device-motion"
